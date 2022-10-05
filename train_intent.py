@@ -68,9 +68,13 @@ def main(args):
     optimizer = torch.optim.Adam(model.parameters(), args.lr)
 
     best_acc = 0.0
-    train_len = len(datasets[TRAIN]) # num of training samples 
-    val_len = len(datasets[DEV]) # num of val samples
-    epoch_pbar = trange(args.num_epoch, desc="Epoch") # trange: for progress bar
+    train_len = len(datasets[TRAIN]) # num of training samples, =15000 
+    val_len = len(datasets[DEV]) # num of val samples, =3000
+    # print("{} train samples; {} val samples".format(train_len, val_len))
+    # epoch_pbar = trange(args.num_epoch, desc="Epoch") # trange: for progress bar
+
+    """only for debug"""
+    first = True
 
     for epoch in range(args.num_epoch):
     # for epoch in epoch_pbar:
@@ -84,9 +88,11 @@ def main(args):
         # for data in train_dataloader:
         for data in tqdm(train_dataloader):
             inputs = data["text"]
+            # inputs: (batch_size=128, seq_len=18/21/...)
             labels = data["intent"]
-            # inputs = torch.tensor(data["text"])
-            # labels = torch.tensor(data["labels"])
+            # labels: (batch_size=128)
+            if first:
+                print("inputs is {}; labels is {}".format(inputs.size(), labels.size()))
             inputs, labels = inputs.to(device), labels.to(device)
             model.zero_grad() # empty the gradients to avoid accumulation
             
@@ -94,13 +100,20 @@ def main(args):
             # assert 1 == 0, "input:{} output:{} labels:{}".format(inputs.size(),outputs.size(), labels.size()) 
 
             optimizer.zero_grad()
-            batch_loss = criterion(outputs, labels) 
+            batch_loss = criterion(outputs, labels)
+            # outputs: (batch_size=128, num_class=150), labels: (batch_size=128)
+
+            if first:
+                print("outputs is {}; labels is {}".format(outputs.size(), labels.size()))
+
             _, train_pred = torch.max(outputs, 1) # get the index of the class with the highest probability, dim to reduce =1
             batch_loss.backward() # backpropagation
             optimizer.step() # param update
         
             train_acc += (train_pred.cpu() == labels.cpu()).sum().item()
             train_loss += batch_loss.item()
+
+            first = False
 
         # TODO: Evaluation loop - calculate accuracy and save model weights
         model.eval() # set the model to evaluation mode
@@ -124,7 +137,7 @@ def main(args):
             # if the model improves, save a checkpoint at this epoch
             if val_acc > best_acc:
                 best_acc = val_acc
-                torch.save(model.state_dict(), args.ckpt_dir / "model_2.ckpt")
+                torch.save(model.state_dict(), args.ckpt_dir / "model.ckpt")
                 print('saving model with acc {:.3f}'.format(best_acc/val_len))
 
         pass

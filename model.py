@@ -30,7 +30,7 @@ class SeqClassifier(torch.nn.Module):
             hidden_size=hidden_size, 
             num_layers=num_layers, 
             dropout=dropout, 
-            batch_first=True,
+            # batch_first=True,
             bidirectional=bidirectional, 
         )
         
@@ -51,14 +51,21 @@ class SeqClassifier(torch.nn.Module):
         h0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).requires_grad_()
         c0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).requires_grad_()
 
+        # print("Now: {}. After transpose {}".format(batch.size(), batch.t().size()))
+        # batch: tensor(batch_size, seq_len)
+        # batch.t(): tensor(seq_len, batch_size,)
         embeds = self.embed(batch.t()) #不確定要不要transpose或維度
+        # embeds: tensor(seq_len, batch_size, num_class*2 if bidirectional else num_class)
+        # print("==Embedding Layer==")
+        # print("Now: {}".format(embeds.size()))
         
-        # Input: (batch_size, seq_len, input_size)
         lstm_out, (_, _) = self.lstm(embeds)
-        # use the newest result h(t), which is lstm[-1], to predict
-        # assert 1 == 0, lstm_out.size()
+        # lstm_out: tensor(seq_len, batch_size, 2*hidden_size = 1024 if bidirectional else hidden_size)
+        # print("==LSTM==\nNow: {}".format(lstm_out.size()))
+        # use the result from the last lstm layer (containing all timesteps), which is lstm[-1], to predict
         # out = self.hidden2out(lstm_out[-1].view(batch_size, -1))
         out = self.hidden2out(lstm_out[-1])
+        # print("==Fully Connected==\nNow: {}\n".format(out.size()))
         
         return out
         raise NotImplementedError
