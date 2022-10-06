@@ -21,6 +21,8 @@ def main(args):
     intent_idx_path = args.cache_dir / "intent2idx.json"
     intent2idx: Dict[str, int] = json.loads(intent_idx_path.read_text())
 
+
+
     data = json.loads(args.test_file.read_text())
     dataset = SeqClsDataset(data, vocab, intent2idx, args.max_len)
 
@@ -37,7 +39,6 @@ def main(args):
         args.bidirectional,
         dataset.num_classes,
     )
-    model.eval()
 
     ckpt = torch.load(args.ckpt_path)
     # load weights into model
@@ -46,6 +47,7 @@ def main(args):
     # TODO: predict dataset
     predict = []
     all_ids = []
+    model.eval()
     with torch.no_grad():
         for i, data in enumerate(test_loader):
             inputs = data["text"]
@@ -55,7 +57,7 @@ def main(args):
             _, test_pred = torch.max(outputs, 1) # get the index of the class with the highest probability
 
             for y in test_pred.cpu().numpy():
-                predict.append(y)
+                predict.append(dataset.idx2label(y))
             for id in ids:
                 all_ids.append(id)
 
@@ -63,6 +65,7 @@ def main(args):
     with open(args.pred_file, 'w') as f:
         f.write('id,intent\n')
         for id, y in zip(all_ids, predict):
+            # TODO: id2label
             f.write('{},{}\n'.format(id, y))
 
 def parse_args() -> Namespace:

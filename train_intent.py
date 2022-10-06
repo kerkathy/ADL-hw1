@@ -137,7 +137,7 @@ def main(args):
             # if the model improves, save a checkpoint at this epoch
             if val_acc > best_acc:
                 best_acc = val_acc
-                torch.save(model.state_dict(), args.ckpt_dir / "model.ckpt")
+                torch.save(model.state_dict(), args.ckpt_dir / "model_dropout_015.ckpt")
                 print('saving model with acc {:.3f}'.format(best_acc/val_len))
 
         pass
