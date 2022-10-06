@@ -82,7 +82,7 @@ class SeqTaggingClsDataset(SeqClsDataset):
         self.label_mapping = label_mapping
         self._idx2label = {idx: intent for intent, idx in self.label_mapping.items()}
         self.max_len = max_len
-        self.ignore_idx = -100
+        self.ignore_idx = -1
 
     def __len__(self) -> int:
         return len(self.data)

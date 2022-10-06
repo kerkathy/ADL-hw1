@@ -60,11 +60,18 @@ def main(args):
             outputs = model(inputs)
             _, test_pred = torch.max(outputs, 2) # get the index of the class with the highest probability
 
-            test_pred = test_pred.t()
             # test_pred: (batch_size, seq_len)
 
             for sentence in test_pred.cpu().numpy():
-                predict.append([dataset.idx2label(word) for word in sentence if word != -1])
+                for word in sentence:
+                    tmp = []
+                    if word == -1:
+                        break
+                    else:
+                        tmp.append(dataset.idx2label(word))
+                predict.append(tmp)
+                
+                # predict.append([dataset.idx2label(word) for word in sentence if word != -1])
             for id in ids:
                 all_ids.append(id)
 

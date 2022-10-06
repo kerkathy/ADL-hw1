@@ -111,8 +111,8 @@ class SeqTagger(SeqClassifier):
         lsrm_out, _ = self.lstm(embeds)
         # lsrm_out: tensor(seq_len, batch_size, 2*hidden_size if bidirectional else hidden_size)
         # print("==GRU==\nNow: {}".format(lsrm_out.size()))
-        out = self.hidden2out(lsrm_out.permute(1,0,2))
-        print("==Fully Connected==\nNow: {}\n".format(out.size()))
+        out = self.hidden2out(lsrm_out.permute(1,0,2).contiguous())
+        # print("==Fully Connected==\nNow: {}\n".format(out.size()))
         # out: tensor(batch_size=128, seq_len=26, class=9)
 
-        return out
+        return F.log_softmax(out, dim=2)

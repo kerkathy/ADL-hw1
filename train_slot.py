@@ -93,11 +93,14 @@ def main(args):
             model.zero_grad() # empty the gradients to avoid accumulation
             
             outputs = model(inputs) # propagate forward
+            # print("== Log & Softmax ==\noutput {}".format(outputs.size()))
+            # outputs: tensor(batch_size=128, seq_len=26, class=9)
 
             optimizer.zero_grad()
             # Cross entropy input: (minibatch, C, d1, ..., dk); target(indices of label)
             # print("output reshaped {}; tags {}".format(outputs.permute(1,2,0).size(), tags.size()))
-            batch_loss = criterion(outputs.permute(1,2,0), tags)
+            batch_loss = loss_fn(outputs.view(-1, outputs.shape[2]), tags)
+            # batch_loss = criterion(outputs.permute(1,2,0), tags)
             # batch_loss: scalar
             # print("batch loss {}; {}".format(batch_loss.size(), type(batch_loss)))
             # outputs: tensor(seq_len=26, batch_size=128, class?=9), tags: (batch_size=128, seq_len=30))
@@ -113,7 +116,8 @@ def main(args):
             batch_loss.backward() # backpropagation
             optimizer.step() # param update
         
-            train_acc += (train_pred.t().cpu() == tags.cpu()).sum().item()
+            # print("train_pred {}; tags {}".format(train_pred.size(), tags.size()))
+            train_acc += (train_pred.cpu() == tags.cpu()).sum().item()
             train_loss += batch_loss.item()
 
             first = False
@@ -126,10 +130,10 @@ def main(args):
                 tags = data["tags"]
                 inputs, tags = inputs.to(device), tags.to(device)
                 outputs = model(inputs)
-                batch_loss = criterion(outputs.permute(1,2,0), tags) 
+                batch_loss = loss_fn(outputs.view(-1, outputs.shape[2]), tags)
                 _, val_pred = torch.max(outputs, 2) 
             
-                val_acc += (val_pred.t().cpu() == tags.cpu()).sum().item() # get the index of the class with the highest probability
+                val_acc += (val_pred.cpu() == tags.cpu()).sum().item() # get the index of the class with the highest probability
                 val_loss += batch_loss.item()
 
             seq_len = tags.size(1)
@@ -145,6 +149,29 @@ def main(args):
 
         pass
 
+def loss_fn(outputs, labels):
+    """
+    Computes neg likelihood for a logged and softmaxed outputs vs. labels
+    Masks out indices of ignore_idx. (<PAD> tokens)
+    - outputs: (batch_size*batch_max_len, NUM_TAGS)
+    - labels: (batch_size, batch_max_len)
+    """
+
+    # print("== Loss Fn ==\nOutputs: {} ; Labels: {}".format(outputs.size(), labels.size()))
+    #reshape labels to give a flat vector of length batch_size*seq_len
+    labels = labels.view(-1)  
+
+    #mask out 'PAD' tokens
+    mask = (labels >= 0).float()
+
+    #the number of tokens is the sum of elements in mask
+    num_tokens = int(torch.sum(mask).item())
+
+    #pick the values corresponding to labels and multiply by mask
+    outputs = outputs[range(outputs.shape[0]), labels]*mask
+
+    #cross entropy loss for all non 'PAD' tokens
+    return -torch.sum(outputs)/num_tokens
 
 def parse_args() -> Namespace:
     parser = ArgumentParser()
