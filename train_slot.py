@@ -32,7 +32,8 @@ def main(args):
     device=args.device
     num_epoch=args.num_epoch
     batch_size = args.batch_size
-    trained_model_file = args.ckpt_dir / "model_slot.ckpt"
+    trained_model_file = args.ckpt_dir / args.ckpt_name
+    # trained_model_file = args.ckpt_dir / "model_slot.ckpt"
     
     with open(args.cache_dir / "vocab.pkl", "rb") as f:
         vocab: Vocab = pickle.load(f)
@@ -48,8 +49,8 @@ def main(args):
     }
 
     # TODO: create DataLoader for train / dev datasets
-    train_dataloader = DataLoader(datasets[TRAIN], args.batch_size, collate_fn=datasets[TRAIN].collate_fn, shuffle=True)
-    dev_dataloader = DataLoader(datasets[DEV], args.batch_size, collate_fn=datasets[DEV].collate_fn, shuffle=False)
+    train_dataloader = DataLoader(datasets[TRAIN], batch_size, collate_fn=datasets[TRAIN].collate_fn, shuffle=True)
+    dev_dataloader = DataLoader(datasets[DEV], batch_size, collate_fn=datasets[DEV].collate_fn, shuffle=False)
     
     # embeddings: () -> tensor(num_samples, seq_len, embed_dim)
     embeddings = torch.load(args.cache_dir / "embeddings.pt")
@@ -165,6 +166,13 @@ def parse_args() -> Namespace:
         help="Directory to save the model file.",
         default="./ckpt/slot/",
     )
+    parser.add_argument(
+        "--ckpt_name",
+        type=Path,
+        help="Directory to save the model file.",
+        required=True,
+    )
+
 
     # data
     parser.add_argument("--max_len", type=int, default=128)

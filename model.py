@@ -90,7 +90,7 @@ class SeqTagger(SeqClassifier):
         self.bidirectional = bidirectional
         self.num_class = num_class
 
-        self.gru = GRU(
+        self.lstm = LSTM(
             input_size=embeddings.shape[1], # embedding dim
             hidden_size=hidden_size, 
             num_layers=num_layers, 
@@ -108,10 +108,10 @@ class SeqTagger(SeqClassifier):
         embeds = self.embed(batch.t()) 
         # print("==Embedding Layer==")
         # print("Now: {}".format(embeds.size()))
-        gru_out, _ = self.gru(embeds)
-        # gru_out: tensor(seq_len, batch_size, 2*hidden_size if bidirectional else hidden_size)
-        # print("==GRU==\nNow: {}".format(gru_out.size()))
-        out = self.hidden2out(gru_out)
+        lsrm_out, _ = self.lstm(embeds)
+        # lsrm_out: tensor(seq_len, batch_size, 2*hidden_size if bidirectional else hidden_size)
+        # print("==GRU==\nNow: {}".format(lsrm_out.size()))
+        out = self.hidden2out(lsrm_out)
         # print("==Fully Connected==\nNow: {}\n".format(out.size()))
         # out: tensor(seq_len=26, batch_size=128, class?=9)
 

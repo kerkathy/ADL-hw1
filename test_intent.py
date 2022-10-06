@@ -1,3 +1,4 @@
+from asyncio import base_tasks
 import json
 import pickle
 from argparse import ArgumentParser, Namespace
@@ -21,13 +22,11 @@ def main(args):
     intent_idx_path = args.cache_dir / "intent2idx.json"
     intent2idx: Dict[str, int] = json.loads(intent_idx_path.read_text())
 
-
-
     data = json.loads(args.test_file.read_text())
     dataset = SeqClsDataset(data, vocab, intent2idx, args.max_len)
 
     # TODO: crecate DataLoader for test dataset
-    test_loader = DataLoader(dataset, batch_size=64, collate_fn=dataset.collate_fn, shuffle=False)
+    test_loader = DataLoader(dataset, batch_size=args.batch_size, collate_fn=dataset.collate_fn, shuffle=False)
 
     embeddings = torch.load(args.cache_dir / "embeddings.pt")
 
@@ -49,7 +48,7 @@ def main(args):
     all_ids = []
     model.eval()
     with torch.no_grad():
-        for i, data in enumerate(test_loader):
+        for data in test_loader:
             inputs = data["text"]
             ids = data["id"]
             inputs = inputs.to(args.device)
