@@ -70,11 +70,11 @@ def main(args):
 
     # TODO: write prediction to file (args.pred_file)
     with open(args.pred_file, 'w') as f:
-        writer = csv.writer(f)
+        writer = csv.writer(f, delimiter=' ')
         f.write('id,intent\n')
         for id, y in zip(all_ids, predict):
             # TODO: id2label
-            f.write('{}'.format(id))
+            f.write('{},'.format(id))
             writer.writerow(y)
 
 
