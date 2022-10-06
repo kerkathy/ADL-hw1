@@ -1,4 +1,4 @@
-id,intent
+id,tags
 test-0,O O O O B-people I-people O B-time O O O O O O O O O O O O O O O O O O O
 test-1,O O O O O O O B-people I-date O B-time O B-time O O O O O O O O O O O O O O
 test-2,O O O O O O O O O O O O O O O O O O O O O O O O O O O
