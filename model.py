@@ -1,7 +1,8 @@
+from tokenize import group
 from typing import Dict
 
 import torch
-from torch.nn import Embedding, LSTM, Dropout, Linear
+from torch.nn import Embedding, LSTM, GRU, Dropout, Linear
 import torch.nn.functional as F
 
 
@@ -68,10 +69,50 @@ class SeqClassifier(torch.nn.Module):
         # print("==Fully Connected==\nNow: {}\n".format(out.size()))
         
         return out
-        raise NotImplementedError
 
 
 class SeqTagger(SeqClassifier):
-    def forward(self, batch) -> Dict[str, torch.Tensor]:
+    def __init__(
+        self,
+        embeddings: torch.tensor,
+        hidden_size: int,
+        num_layers: int,
+        dropout: float,
+        bidirectional: bool,
+        num_class: int,
+    ) -> None:
+        super(SeqClassifier, self).__init__()
+        self.embed = Embedding.from_pretrained(embeddings, freeze=False)
+        self.embed_dim = embeddings.shape[1]
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.dropout = dropout
+        self.bidirectional = bidirectional
+        self.num_class = num_class
+
+        self.gru = GRU(
+            input_size=embeddings.shape[1], # embedding dim
+            hidden_size=hidden_size, 
+            num_layers=num_layers, 
+            dropout=dropout, 
+            bidirectional=bidirectional, 
+        )
+        
+        # Fully connected linear layer that converts final hidden state to output 
+        self.hidden2out = Linear(2*self.hidden_size, self.num_class) if self.bidirectional else Linear(self.hidden_size, self.num_class)
+
+    def forward(self, batch) -> torch.Tensor:
         # TODO: implement model forward
-        raise NotImplementedError
+        batch_size = batch.size(0)
+        # print("Now: {}. After transpose {}".format(batch.size(), batch.t().size()))
+        embeds = self.embed(batch.t()) 
+        # print("==Embedding Layer==")
+        # print("Now: {}".format(embeds.size()))
+        gru_out, _ = self.gru(embeds)
+        # gru_out: tensor(seq_len, batch_size, 2*hidden_size if bidirectional else hidden_size)
+        # print("==GRU==\nNow: {}".format(gru_out.size()))
+        out = self.hidden2out(gru_out)
+        # print("==Fully Connected==\nNow: {}\n".format(out.size()))
+        # out: tensor(seq_len=26, batch_size=128, class?=9)
+
+        return out

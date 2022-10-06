@@ -2,7 +2,7 @@ from typing import List, Dict
 
 from torch.utils.data import Dataset
 
-from utils import Vocab
+from utils import Vocab, pad_to_len
 
 import torch
 
@@ -54,7 +54,7 @@ class SeqClsDataset(Dataset):
         # padding using smallest unused index (i.e., num_classes) to max length within this batch
         # or else, there would be dim error when creating model 
         if "intent" in samples[0]:
-            batch["intent"] = [self.label2idx(sample["intent"]) for sample in samples]
+            batch["intent"] = [self.label2idx(sample["intent"]) for sample in samples] 
             batch["intent"] = torch.tensor(batch["intent"])
             # assert type(batch["intent"][0]) == int
             
@@ -69,7 +69,6 @@ class SeqClsDataset(Dataset):
 
 
 class SeqTaggingClsDataset(SeqClsDataset):
-    ignore_idx = -100
 
     def __init__(
         self,
@@ -83,6 +82,7 @@ class SeqTaggingClsDataset(SeqClsDataset):
         self.label_mapping = label_mapping
         self._idx2label = {idx: intent for intent, idx in self.label_mapping.items()}
         self.max_len = max_len
+        self.ignore_idx = -100
 
     def __len__(self) -> int:
         return len(self.data)
@@ -116,7 +116,9 @@ class SeqTaggingClsDataset(SeqClsDataset):
 
         # for train/val split
         if "tags" in samples[0]:
-            batch["tags"] = [self.label2idx(sample["tags"]) for sample in samples] # List[List[str]]
+            batch["tags"] = [[self.label2idx(tag) for tag in sample["tags"]] for sample in samples]
+            # List[List[int]]
+            batch["tags"] = pad_to_len(batch["tags"], batch["tokens"].size(1), self.ignore_idx)
             batch["tags"] = torch.tensor(batch["tags"])
             
         return batch
