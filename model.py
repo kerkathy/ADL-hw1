@@ -88,8 +88,7 @@ class SeqTagger(SeqClassifier):
         self.num_layers = num_layers
         self.dropout = dropout
         self.bidirectional = bidirectional
-        self.num_class = num_class + 1
-        # self.num_class = num_class
+        self.num_class = num_class + 1 # class + padding
 
         self.lstm = LSTM(
             input_size=embeddings.shape[1], # embedding dim
