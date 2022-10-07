@@ -2,12 +2,13 @@ import json
 import pickle
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
+from re import X
 from typing import Dict
 
 import torch
 from torch.optim import Adam
 from torch.utils.data import DataLoader
-from tqdm import tqdm, trange
+from tqdm import tqdm
 
 from dataset import SeqTaggingClsDataset
 from model import SeqTagger
@@ -62,15 +63,13 @@ def main(args):
     print(model)
     
     # TODO: init optimizer
-    criterion = nn.CrossEntropyLoss(ignore_index=100) # This criterion combines nn.LogSoftmax() and nn.NLLLoss() in one single class.
+    ignore_index = datasets[DEV].num_classes
+    criterion = nn.CrossEntropyLoss(ignore_index=ignore_index) # This criterion combines nn.LogSoftmax() and nn.NLLLoss() in one single class.
     optimizer = torch.optim.Adam(model.parameters(), lr)
 
     best_acc = 0.0
     train_len = len(datasets[TRAIN]) # num of training samples 
     val_len = len(datasets[DEV]) # num of val samples
-
-    """only for debug"""
-    first = True
 
     for epoch in range(num_epoch):
     # for epoch in epoch_pbar:
@@ -83,13 +82,11 @@ def main(args):
         model.train()
         # for data in train_dataloader:
         for data in tqdm(train_dataloader):
-            inputs = data["tokens"]
+            inputs, tags, ignore = data["tokens"], data["tags"], data["ignore"]
+            inputs, tags, ignore = inputs.to(device), tags.to(device), ignore.to(device)
             # inputs: (batch_size=128, seq_len=30/18/21/...)
-            tags = data["tags"]
             # tags: (batch_size=128, seq_len=30)
-            # if first:
-                # print("inputs is {}; tags is {}".format(inputs.size(), tags.size()))
-            inputs, tags = inputs.to(device), tags.to(device)
+            # ignore: (batch_size=128, seq_len=30)
             model.zero_grad() # empty the gradients to avoid accumulation
             
             outputs = model(inputs) # propagate forward
@@ -98,55 +95,66 @@ def main(args):
 
             optimizer.zero_grad()
             # Cross entropy input: (minibatch, C, d1, ..., dk); target(indices of label)
-            # print("output reshaped {}; tags {}".format(outputs.permute(1,2,0).size(), tags.size()))
             # batch_loss = loss_fn(outputs.view(-1, outputs.shape[2]), tags)
             batch_loss = criterion(outputs.permute(0,2,1), tags)
             # batch_loss: scalar
-            # print("batch loss {}; {}".format(batch_loss.size(), type(batch_loss)))
-            # outputs: tensor(seq_len=26, batch_size=128, class?=9), tags: (batch_size=128, seq_len=30))
-
-            # if first:
-                # print("outputs is {}; tags is {}".format(outputs.size(), tags.size()))
+            # outputs: tensor(seq_len=26, batch_size=128, class=9), tags: (batch_size=128, seq_len=30))
 
             _, train_pred = torch.max(outputs, 2) # get the index of the class with the highest probability, dim to reduce =2
-            # train_pred: tensor(seq_len, batch_size)
+            train_pred[ignore] = ignore_index
 
-            # if first:
-            #     print("train_pred is {}".format(train_pred.size()))
+            # print(inputs[0])
+            # print(tags[0])
+            # print(ignore[0])
+            # print(train_pred[0])
+            # print("ignore_idx: {}".format(ignore_index))
+            # exit()
+
+            # train_pred: tensor(batch_size, seq_len)
+            # print("train_pred: {}; mask:{}".format(train_pred.size(), mask.size()))
+
+
             batch_loss.backward() # backpropagation
             optimizer.step() # param update
         
             # print("train_pred {}; tags {}".format(train_pred.size(), tags.size()))
-            train_acc += (train_pred.cpu() == tags.cpu()).sum().item()
+            # train_pred = (train_pred * mask) >= 0
+            # train_acc += batch_acc
+            # train_acc += (train_pred.cpu() == tags.cpu()).sum().item()
+            train_acc += len(torch.where((train_pred==tags).all(dim=1))[0])
             train_loss += batch_loss.item()
-
-            first = False
 
         # TODO: Evaluation loop - calculate accuracy and save model weights
         model.eval() # set the model to evaluation mode
         with torch.no_grad():
             for data in dev_dataloader:
-                inputs = data["tokens"]
-                tags = data["tags"]
-                inputs, tags = inputs.to(device), tags.to(device)
+                inputs, tags, ignore = data["tokens"], data["tags"], data["ignore"]
+                inputs, tags, ignore = inputs.to(device), tags.to(device), ignore.to(device)
                 outputs = model(inputs)
                 batch_loss = criterion(outputs.permute(0,2,1), tags)
                 # batch_loss = loss_fn(outputs.view(-1, outputs.shape[2]), tags)
-                _, val_pred = torch.max(outputs, 2) 
-            
-                val_acc += (val_pred.cpu() == tags.cpu()).sum().item() # get the index of the class with the highest probability
+
+                _, val_pred = torch.max(outputs, 2)
+                val_pred[ignore] = ignore_index
+                # val_pred = val_pred * ignore # ignore paddings as 0
+
+                # val_acc += (val_pred.cpu() == tags.cpu()).sum().item() # get the index of the class with the highest probability
+                val_acc += len(torch.where((val_pred==tags).all(dim=1))[0])
+                # val_acc += batch_acc
                 val_loss += batch_loss.item()
 
-            seq_len = tags.size(1)
+            # seq_len = tags.size(1)
             print('[{:03d}/{:03d}] Train Acc: {:3.6f} Loss: {:3.6f} | Val Acc: {:3.6f} loss: {:3.6f}'.format(
-                epoch + 1, num_epoch, train_acc/train_len/seq_len, train_loss/len(train_dataloader), val_acc/val_len/seq_len, val_loss/len(dev_dataloader)
+                epoch + 1, num_epoch, train_acc/train_len, train_loss, val_acc/val_len, val_loss
+                # epoch + 1, num_epoch, train_acc/train_len/seq_len, train_loss/len(train_dataloader), val_acc/val_len/seq_len, val_loss/len(dev_dataloader)
             ))
 
             # if the model improves, save a checkpoint at this epoch
             if val_acc > best_acc:
                 best_acc = val_acc
                 torch.save(model.state_dict(), trained_model_file)
-                print('saving model with acc {:.3f}'.format(best_acc/val_len/seq_len))
+                print('saving model with acc {:.3f}'.format(best_acc))
+                # print('saving model with acc {:.3f}'.format(best_acc/val_len/seq_len))
 
         pass
 
@@ -157,23 +165,24 @@ def loss_fn(outputs, labels):
     - outputs: (batch_size*batch_max_len, NUM_TAGS)
     - labels: (batch_size, batch_max_len)
     """
-
     # print("== Loss Fn ==\nOutputs: {} ; Labels: {}".format(outputs.size(), labels.size()))
     #reshape labels to give a flat vector of length batch_size*seq_len
     labels = labels.view(-1)  
 
     #mask out 'PAD' tokens
-    mask = (labels >= 0).float()
+    mask = (labels > -1).float()
 
     #the number of tokens is the sum of elements in mask
     num_tokens = int(torch.sum(mask).item())
 
     #pick the values corresponding to labels and multiply by mask
     outputs = outputs[range(outputs.shape[0]), labels]*mask
+    # print("outputs: {}".format(outputs.size()))
+    # print("Pred: {} ; labels: {}".format(pred.size(), labels.size()))
 
     #cross entropy loss for all non 'PAD' tokens
     return -torch.sum(outputs)/num_tokens
-
+    
 def parse_args() -> Namespace:
     parser = ArgumentParser()
     parser.add_argument(

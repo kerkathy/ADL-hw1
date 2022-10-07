@@ -51,6 +51,7 @@ def main(args):
     # TODO: predict dataset
     predict = []
     all_ids = []
+    ignore_index = dataset.num_classes
     model.eval()
     with torch.no_grad():
         for data in test_loader:
@@ -71,9 +72,9 @@ def main(args):
             #             tmp.append(dataset.idx2label(word))
             #     predict.append(tmp)
 
-            test_pred = test_pred.cpu() * data["mask"]
+            test_pred[data["ignore"]] = ignore_index
             for sentence in test_pred.cpu().numpy():
-                predict.append([dataset.idx2label(word) for word in sentence if word >= 0])
+                predict.append([dataset.idx2label(word) for word in sentence if word < ignore_index])
             for id in ids:
                 all_ids.append(id)
 
