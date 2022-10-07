@@ -82,7 +82,7 @@ class SeqTaggingClsDataset(SeqClsDataset):
         self.label_mapping = label_mapping
         self._idx2label = {idx: intent for intent, idx in self.label_mapping.items()}
         self.max_len = max_len
-        self.ignore_idx = -1
+        self.ignore_idx = 100
 
     def __len__(self) -> int:
         return len(self.data)
@@ -105,6 +105,7 @@ class SeqTaggingClsDataset(SeqClsDataset):
         batch = dict()
         batch["id"] = [sample["id"] for sample in samples] # List[str]
         batch["tokens"] = [sample["tokens"] for sample in samples] # List[List[str]]
+        batch_length = [len(s) for s in batch["tokens"]] 
 
         # encode_batch: List[List[str]] -> List[List[int]]
         # 1. pads each sequence to the max length of the batch 
@@ -114,9 +115,13 @@ class SeqTaggingClsDataset(SeqClsDataset):
         # convert to tensor
         batch["tokens"] = torch.tensor(batch["tokens"])
 
+        batch_max_len = max(batch_length)
+        batch["mask"] = [[1]*len for len in batch_length]
+        batch["mask"] = pad_to_len(batch["mask"], batch_max_len, -1)
+        batch["mask"] = torch.tensor(batch["mask"])
+
         # for train/val split
         if "tags" in samples[0]:
-            batch_max_len = max([len(s) for s in batch["tokens"]])
             batch["tags"] = [[self.label2idx(tag) for tag in sample["tags"]] for sample in samples]
             # List[List[int]]
             batch["tags"] = pad_to_len(batch["tags"], batch_max_len, self.ignore_idx)

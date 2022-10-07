@@ -62,16 +62,18 @@ def main(args):
 
             # test_pred: (batch_size, seq_len)
 
+            # for sentence in test_pred.cpu().numpy():
+            #     for word in sentence:
+            #         tmp = []
+            #         if word == -1:
+            #             break
+            #         else:
+            #             tmp.append(dataset.idx2label(word))
+            #     predict.append(tmp)
+
+            test_pred = test_pred.cpu() * data["mask"]
             for sentence in test_pred.cpu().numpy():
-                for word in sentence:
-                    tmp = []
-                    if word == -1:
-                        break
-                    else:
-                        tmp.append(dataset.idx2label(word))
-                predict.append(tmp)
-                
-                # predict.append([dataset.idx2label(word) for word in sentence if word != -1])
+                predict.append([dataset.idx2label(word)] for word in sentence if word >= 0)
             for id in ids:
                 all_ids.append(id)
 

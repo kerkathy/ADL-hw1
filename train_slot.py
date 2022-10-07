@@ -62,7 +62,7 @@ def main(args):
     print(model)
     
     # TODO: init optimizer
-    criterion = nn.CrossEntropyLoss() # This criterion combines nn.LogSoftmax() and nn.NLLLoss() in one single class.
+    criterion = nn.CrossEntropyLoss(ignore_index=100) # This criterion combines nn.LogSoftmax() and nn.NLLLoss() in one single class.
     optimizer = torch.optim.Adam(model.parameters(), lr)
 
     best_acc = 0.0
@@ -99,8 +99,8 @@ def main(args):
             optimizer.zero_grad()
             # Cross entropy input: (minibatch, C, d1, ..., dk); target(indices of label)
             # print("output reshaped {}; tags {}".format(outputs.permute(1,2,0).size(), tags.size()))
-            batch_loss = loss_fn(outputs.view(-1, outputs.shape[2]), tags)
-            # batch_loss = criterion(outputs.permute(1,2,0), tags)
+            # batch_loss = loss_fn(outputs.view(-1, outputs.shape[2]), tags)
+            batch_loss = criterion(outputs.permute(0,2,1), tags)
             # batch_loss: scalar
             # print("batch loss {}; {}".format(batch_loss.size(), type(batch_loss)))
             # outputs: tensor(seq_len=26, batch_size=128, class?=9), tags: (batch_size=128, seq_len=30))
@@ -130,7 +130,8 @@ def main(args):
                 tags = data["tags"]
                 inputs, tags = inputs.to(device), tags.to(device)
                 outputs = model(inputs)
-                batch_loss = loss_fn(outputs.view(-1, outputs.shape[2]), tags)
+                batch_loss = criterion(outputs.permute(0,2,1), tags)
+                # batch_loss = loss_fn(outputs.view(-1, outputs.shape[2]), tags)
                 _, val_pred = torch.max(outputs, 2) 
             
                 val_acc += (val_pred.cpu() == tags.cpu()).sum().item() # get the index of the class with the highest probability
@@ -152,7 +153,7 @@ def main(args):
 def loss_fn(outputs, labels):
     """
     Computes neg likelihood for a logged and softmaxed outputs vs. labels
-    Masks out indices of ignore_idx. (<PAD> tokens)
+    Masks out indices of negative ignore_idx. (<PAD> tokens)
     - outputs: (batch_size*batch_max_len, NUM_TAGS)
     - labels: (batch_size, batch_max_len)
     """

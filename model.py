@@ -88,7 +88,8 @@ class SeqTagger(SeqClassifier):
         self.num_layers = num_layers
         self.dropout = dropout
         self.bidirectional = bidirectional
-        self.num_class = num_class
+        self.num_class = num_class + 1
+        # self.num_class = num_class
 
         self.lstm = LSTM(
             input_size=embeddings.shape[1], # embedding dim
@@ -115,4 +116,5 @@ class SeqTagger(SeqClassifier):
         # print("==Fully Connected==\nNow: {}\n".format(out.size()))
         # out: tensor(batch_size=128, seq_len=26, class=9)
 
-        return F.log_softmax(out, dim=2)
+        return out
+        # return F.log_softmax(out, dim=2)
