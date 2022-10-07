@@ -73,7 +73,7 @@ def main(args):
 
             test_pred = test_pred.cpu() * data["mask"]
             for sentence in test_pred.cpu().numpy():
-                predict.append([dataset.idx2label(word)] for word in sentence if word >= 0)
+                predict.append([dataset.idx2label(word) for word in sentence if word >= 0])
             for id in ids:
                 all_ids.append(id)
 
