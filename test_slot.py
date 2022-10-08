@@ -14,6 +14,8 @@ from utils import Vocab
 
 import csv
 
+from seqeval.scheme import IOB2
+from seqeval.metrics import classification_report
 
 TEST = "test"
 
@@ -77,14 +79,56 @@ def main(args):
             f.write('{},'.format(id))
             writer.writerow(y)
 
+    """
+    Generate classification report on eval data.
+    """
+    eval_data = json.loads(args.eval_file.read_text())
+    eval_dataset = SeqTaggingClsDataset(eval_data, vocab, tag2idx, max_len)
+    eval_loader = DataLoader(eval_dataset, batch_size=batch_size, collate_fn=dataset.collate_fn, shuffle=False)
+
+    eval_predict=[]
+    eval_all_ids=[]
+    eval_tags=[]
+    with torch.no_grad():
+        for data in eval_loader:
+            inputs, tags = data["tokens"], data["tags"]
+            inputs, tags = inputs.to(device), tags.to(device)
+            outputs = model(inputs)
+            _, eval_pred = torch.max(outputs, 2) # get the index of the class with the highest probability
+
+            # test_pred: (batch_size, seq_len)
+            eval_pred[data["ignore"]] = ignore_index
+            for sentence in eval_pred.cpu().numpy():
+                eval_predict.append([eval_dataset.idx2label(word) for word in sentence if word < ignore_index])
+            for tag in tags.cpu().numpy():
+                eval_tags.append([eval_dataset.idx2label(word) for word in tag if word < ignore_index])
+    
+    print("Task: slot tagging")
+    print(f"max_len: {max_len}")
+    print(f"hidden_size: {hidden_size}")
+    print(f"num_layers: {num_layers}")
+    print(f"dropout: {dropout}")
+    print(f"bidirectional: {bidirectional}")
+    print(f"batch_size: {batch_size}")
+    print(classification_report(eval_tags, eval_predict, mode='strict', scheme=IOB2))
+
 
 def parse_args() -> Namespace:
     parser = ArgumentParser()
     parser.add_argument(
+        "--eval_file",
+        type=Path,
+        help="Path to the eval file.",
+        default="./data/slot/eval.json",
+        # required=True
+    )
+    
+    parser.add_argument(
         "--test_file",
         type=Path,
         help="Path to the test file.",
-        required=True
+        default="./data/slot/test.json",
+        # required=True
     )
     parser.add_argument(
         "--cache_dir",

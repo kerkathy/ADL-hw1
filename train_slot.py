@@ -16,6 +16,8 @@ from utils import Vocab
 
 from torch import nn 
 
+# from seqeval.scheme import IOB2
+# from seqeval.metrics import classification_report
 
 TRAIN = "train"
 DEV = "eval"
@@ -148,6 +150,7 @@ def main(args):
                 epoch + 1, num_epoch, train_acc/train_len, train_loss, val_acc/val_len, val_loss
                 # epoch + 1, num_epoch, train_acc/train_len/seq_len, train_loss/len(train_dataloader), val_acc/val_len/seq_len, val_loss/len(dev_dataloader)
             ))
+            # classification_report(tags, val_pred, mode='strict', scheme=IOB2)
 
             # if the model improves, save a checkpoint at this epoch
             if val_acc > best_acc:
@@ -206,7 +209,7 @@ def parse_args() -> Namespace:
     parser.add_argument(
         "--ckpt_name",
         type=Path,
-        help="Directory to save the model file.",
+        help="Name to save the model file.",
         required=True,
     )
 

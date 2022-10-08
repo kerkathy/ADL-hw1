@@ -98,6 +98,7 @@ class SeqTaggingClsDataset(SeqClsDataset):
     def collate_fn(self, samples: List[Dict]) -> Dict:
         """
         Collates the input samples into a batch for yielding from the data loader iterator
+        batch["id"] -> List[str]
         batch["tokens"] -> tensor(batch_size, seq_len, embed_size(input_size))
         batch["tags"] -> tensor(batch_size, 1)
         batch["ignore"] -> tensor(batch_size, seq_len, embed_size(input_size)), contains values 1 or 0
