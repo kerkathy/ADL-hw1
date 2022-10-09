@@ -102,12 +102,12 @@ class SeqTagger(SeqClassifier):
         )
         
         # Fully connected linear layer that converts final hidden state to output 
-        self.hidden2out = Linear(2*self.hidden_size, self.num_class) if self.bidirectional else Linear(self.hidden_size, self.num_class)
-        # self.hidden2out = Sequential(
-        #     Linear(2*self.hidden_size, 200) if self.bidirectional else Linear(self.hidden_size, 200),
-        #     ReLU(),
-        #     Linear(200, self.num_class),
-        # )
+        # self.hidden2out = Linear(2*self.hidden_size, self.num_class) if self.bidirectional else Linear(self.hidden_size, self.num_class)
+        self.hidden2out = Sequential(
+            Linear(2*self.hidden_size, 200) if self.bidirectional else Linear(self.hidden_size, 200),
+            ReLU(),
+            Linear(200, self.num_class),
+        )
 
     def forward(self, batch) -> torch.Tensor:
         # TODO: implement model forward

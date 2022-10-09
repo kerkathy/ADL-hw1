@@ -67,7 +67,8 @@ def main(args):
     # TODO: init optimizer
     ignore_index = datasets[DEV].num_classes
     criterion = nn.CrossEntropyLoss(ignore_index=ignore_index) # This criterion combines nn.LogSoftmax() and nn.NLLLoss() in one single class.
-    optimizer = torch.optim.Adam(model.parameters(), lr, weight_decay=1e-4)
+    # optimizer = torch.optim.Adam(model.parameters(), lr, weight_decay=1e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr)
 
     best_acc = 0.0
     train_len = len(datasets[TRAIN]) # num of training samples 
