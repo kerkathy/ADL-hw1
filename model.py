@@ -38,6 +38,18 @@ class SeqClassifier(torch.nn.Module):
         # Fully connected linear layer that converts final hidden state to output 
         self.hidden2out = Linear(2*self.hidden_size, self.num_class) if self.bidirectional else Linear(self.hidden_size, self.num_class)
 
+    # lstm_output : [batch_size, seq_len, hidden_size * num_directions(=2)], F matrix
+    # final_state: [batch_size, hidden_size*2]
+    def attention_net(self, lstm_output, final_state):
+        hidden = final_state.view(-1, self.hidden_size * 2, 1) # add 2nd dim
+        # hidden: [batch_size, hidden_size*2, 1]
+        attn_weights = torch.bmm(lstm_output, hidden).squeeze(2)
+         # attn_weights : [batch_size, n_step]
+        soft_attn_weights = F.softmax(attn_weights, 1)
+        # [batch_size, n_hidden * num_directions(=2), n_step] * [batch_size, n_step, 1] = [batch_size, n_hidden * num_directions(=2), 1]
+        context = torch.bmm(lstm_output.transpose(1, 2), soft_attn_weights.unsqueeze(2)).squeeze(2)
+        return context # context : [batch_size, n_hidden * num_directions(=2)]
+
 
     @property
     def encoder_output_size(self) -> int:
@@ -50,23 +62,41 @@ class SeqClassifier(torch.nn.Module):
         batch_size = batch.size(0)
 
         # Initialize hidden state and cell state with zeros
-        h0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).requires_grad_()
-        c0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).requires_grad_()
+        # h0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).requires_grad_()
+        # c0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).requires_grad_()
 
         # print("Now: {}. After transpose {}".format(batch.size(), batch.t().size()))
         # batch: tensor(batch_size, seq_len)
         # batch.t(): tensor(seq_len, batch_size,)
-        embeds = self.embed(batch.t()) #不確定要不要transpose或維度
+        embeds = self.embed(batch.t())
         # embeds: tensor(seq_len, batch_size, num_class*2 if bidirectional else num_class)
         # print("==Embedding Layer==")
         # print("Now: {}".format(embeds.size()))
         
-        lstm_out, (_, _) = self.lstm(embeds)
+        lstm_out, (hn, _) = self.lstm(embeds)
         # lstm_out: tensor(seq_len, batch_size, 2*hidden_size = 1024 if bidirectional else hidden_size)
-        # print("==LSTM==\nNow: {}".format(lstm_out.size()))
+        # hn: (2 if bi * num_layer, batch_size, hidden_size) = (4,128,512)
+
+        # print(f"==LSTM==\nNow: lstm_out {lstm_out.size()}, hn {hn.size()}")
+
+        if(self.bidirectional):
+            hn = torch.cat((hn[-1],hn[-2]), axis = 1) # hn[-1], hn[-2]: top-most layer for forward/backward hidden state
+        else:
+            hn = hn[-1]
+        # print(f"hn: {hn.size()}")
+        # hn: (batch_size, hidden_size * 2) = (128, 1024)
+
+        lstm_out = lstm_out.permute(1,0,2)
+        attn_out = self.attention_net(lstm_out, hn)
+        # should be (batch_size, hidden_size*2 if bi else hidden_size)
+
         # use the result from the last lstm layer (containing all timesteps), which is lstm[-1], to predict
         # out = self.hidden2out(lstm_out[-1].view(batch_size, -1))
-        out = self.hidden2out(lstm_out[-1])
+        
+        out = self.hidden2out(attn_out)
+
+        # out = self.hidden2out(lstm_out[-1])
+        # out: (batch_size, num_class)
         # print("==Fully Connected==\nNow: {}\n".format(out.size()))
         
         return out
