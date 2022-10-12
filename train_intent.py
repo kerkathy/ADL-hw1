@@ -1,5 +1,5 @@
-import os
-os.environ["CUDA_LAUNCH_BLOCKING"]="1"
+# import os
+# os.environ["CUDA_LAUNCH_BLOCKING"]="1"
 
 from cProfile import label
 import json
@@ -8,9 +8,9 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Dict
 
-import torch
-"""debug"""
-torch.backends.cudnn.enabled=False
+# import torch
+# """debug"""
+# torch.backends.cudnn.enabled=False
 
 from torch import nn 
 from tqdm import tqdm, trange

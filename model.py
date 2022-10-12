@@ -36,7 +36,7 @@ class SeqClassifier(torch.nn.Module):
         )
         
         # Fully connected linear layer that converts final hidden state to output 
-        # self.hidden2out = Linear(2*self.hidden_size, self.num_class) if self.bidirectional else Linear(self.hidden_size, self.num_class)
+        self.hidden2out = Linear(2*self.hidden_size, self.num_class) if self.bidirectional else Linear(self.hidden_size, self.num_class)
 
 
     @property
@@ -91,9 +91,9 @@ class SeqTagger(SeqClassifier):
         self.bidirectional = bidirectional
         self.num_class = num_class + 1 # class + padding
 
-        self.lstm = LSTM(
+        # self.lstm = LSTM(
         # self.lstm = GRU(
-        # self.lstm = RNN(
+        self.lstm = RNN(
             input_size=embeddings.shape[1], # embedding dim
             hidden_size=hidden_size, 
             num_layers=num_layers, 
@@ -102,12 +102,12 @@ class SeqTagger(SeqClassifier):
         )
         
         # Fully connected linear layer that converts final hidden state to output 
-        # self.hidden2out = Linear(2*self.hidden_size, self.num_class) if self.bidirectional else Linear(self.hidden_size, self.num_class)
-        self.hidden2out = Sequential(
-            Linear(2*self.hidden_size, 200) if self.bidirectional else Linear(self.hidden_size, 200),
-            ReLU(),
-            Linear(200, self.num_class),
-        )
+        self.hidden2out = Linear(2*self.hidden_size, self.num_class) if self.bidirectional else Linear(self.hidden_size, self.num_class)
+        # self.hidden2out = Sequential(
+        #     Linear(2*self.hidden_size, 200) if self.bidirectional else Linear(self.hidden_size, 200),
+        #     ReLU(),
+        # Linear(200, self.num_class),
+        # )
 
     def forward(self, batch) -> torch.Tensor:
         # TODO: implement model forward

@@ -38,6 +38,7 @@ def main(args):
         args.bidirectional,
         dataset.num_classes,
     )
+    model = model.to(args.device)
 
     ckpt = torch.load(args.ckpt_path)
     # load weights into model
@@ -61,7 +62,7 @@ def main(args):
                 all_ids.append(id)
 
     # TODO: write prediction to file (args.pred_file)
-    with open(args.pred_file, 'w') as f:
+    with open("results/intent" / args.pred_file, 'w') as f:
         f.write('id,intent\n')
         for id, y in zip(all_ids, predict):
             # TODO: id2label
@@ -87,7 +88,12 @@ def parse_args() -> Namespace:
         help="Path to model checkpoint.",
         required=True
     )
-    parser.add_argument("--pred_file", type=Path, default="pred.intent.csv")
+    parser.add_argument(
+        "--pred_file", 
+        type=Path, 
+        default="pred.intent.csv",
+        required=True
+    )
 
     # data
     parser.add_argument("--max_len", type=int, default=128)
@@ -102,7 +108,7 @@ def parse_args() -> Namespace:
     parser.add_argument("--batch_size", type=int, default=128)
 
     parser.add_argument(
-        "--device", type=torch.device, help="cpu, cuda, cuda:0, cuda:1", default="cpu"
+        "--device", type=torch.device, help="cpu, cuda, cuda:0, cuda:1", default="cuda"
     )
     args = parser.parse_args()
     return args
