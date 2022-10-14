@@ -121,9 +121,9 @@ class SeqTagger(SeqClassifier):
         self.bidirectional = bidirectional
         self.num_class = num_class + 1 # class + padding
 
-        # self.lstm = LSTM(
+        self.lstm = LSTM(
         # self.lstm = GRU(
-        self.lstm = RNN(
+        # self.lstm = RNN(
             input_size=embeddings.shape[1], # embedding dim
             hidden_size=hidden_size, 
             num_layers=num_layers, 

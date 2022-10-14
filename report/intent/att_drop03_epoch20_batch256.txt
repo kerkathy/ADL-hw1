@@ -1,0 +1,36 @@
+Using cuda device
+SeqClassifier(
+  (embed): Embedding(6491, 300)
+  (lstm): LSTM(300, 512, num_layers=2, dropout=0.3, bidirectional=True)
+  (hidden2out): Linear(in_features=1024, out_features=150, bias=True)
+)
+[001/020] Train Acc: 0.228200 Loss: 3.498410 | Val Acc: 0.608667 loss: 1.511622
+saving model with acc 0.609
+[002/020] Train Acc: 0.815800 Loss: 0.709673 | Val Acc: 0.846667 loss: 0.583858
+saving model with acc 0.847
+[003/020] Train Acc: 0.930400 Loss: 0.270456 | Val Acc: 0.874667 loss: 0.457997
+saving model with acc 0.875
+[004/020] Train Acc: 0.963933 Loss: 0.143933 | Val Acc: 0.903333 loss: 0.394515
+saving model with acc 0.903
+[005/020] Train Acc: 0.982800 Loss: 0.079837 | Val Acc: 0.897333 loss: 0.382596
+[006/020] Train Acc: 0.988400 Loss: 0.055751 | Val Acc: 0.905333 loss: 0.370061
+saving model with acc 0.905
+[007/020] Train Acc: 0.993400 Loss: 0.035170 | Val Acc: 0.903667 loss: 0.359139
+[008/020] Train Acc: 0.996133 Loss: 0.022971 | Val Acc: 0.907667 loss: 0.348054
+saving model with acc 0.908
+[009/020] Train Acc: 0.996867 Loss: 0.016155 | Val Acc: 0.901333 loss: 0.384582
+[010/020] Train Acc: 0.996933 Loss: 0.016510 | Val Acc: 0.909333 loss: 0.362717
+saving model with acc 0.909
+[011/020] Train Acc: 0.997533 Loss: 0.014132 | Val Acc: 0.911333 loss: 0.349333
+saving model with acc 0.911
+[012/020] Train Acc: 0.997800 Loss: 0.012460 | Val Acc: 0.906667 loss: 0.371953
+[013/020] Train Acc: 0.998667 Loss: 0.008407 | Val Acc: 0.915000 loss: 0.353624
+saving model with acc 0.915
+[014/020] Train Acc: 0.998267 Loss: 0.008266 | Val Acc: 0.907667 loss: 0.397719
+[015/020] Train Acc: 0.997400 Loss: 0.012537 | Val Acc: 0.916000 loss: 0.365001
+saving model with acc 0.916
+[016/020] Train Acc: 0.998733 Loss: 0.007123 | Val Acc: 0.915000 loss: 0.367854
+[017/020] Train Acc: 0.998267 Loss: 0.009436 | Val Acc: 0.905333 loss: 0.414144
+[018/020] Train Acc: 0.991533 Loss: 0.037516 | Val Acc: 0.898333 loss: 0.411837
+[019/020] Train Acc: 0.992200 Loss: 0.030526 | Val Acc: 0.900667 loss: 0.416782
+[020/020] Train Acc: 0.994933 Loss: 0.023577 | Val Acc: 0.899667 loss: 0.403660
