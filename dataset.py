@@ -42,6 +42,8 @@ class SeqClsDataset(Dataset):
         batch["id"] = [sample["id"] for sample in samples]
         batch["text"] = [sample["text"].split() for sample in samples]
 
+        # batch_length = [len(s) for s in batch["text"]]
+
         # encode_batch: List[List[str]] -> List[List[int]]
         # 1. pads each sequence to the max length of the batch 
         # 2. converts text to ids

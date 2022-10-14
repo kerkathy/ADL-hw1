@@ -35,6 +35,7 @@ class SeqClassifier(torch.nn.Module):
             bidirectional=bidirectional, 
         )
         
+        self.dropout = Dropout(self.dropout)
         # Fully connected linear layer that converts final hidden state to output 
         self.hidden2out = Linear(2*self.hidden_size, self.num_class) if self.bidirectional else Linear(self.hidden_size, self.num_class)
 
@@ -72,6 +73,7 @@ class SeqClassifier(torch.nn.Module):
         # embeds: tensor(seq_len, batch_size, num_class*2 if bidirectional else num_class)
         # print("==Embedding Layer==")
         # print("Now: {}".format(embeds.size()))
+        embeds = self.dropout(embeds)
         
         lstm_out, (hn, _) = self.lstm(embeds)
         # lstm_out: tensor(seq_len, batch_size, 2*hidden_size = 1024 if bidirectional else hidden_size)
@@ -92,8 +94,8 @@ class SeqClassifier(torch.nn.Module):
 
         # use the result from the last lstm layer (containing all timesteps), which is lstm[-1], to predict
         # out = self.hidden2out(lstm_out[-1].view(batch_size, -1))
-        
-        out = self.hidden2out(attn_out)
+        out = self.dropout(attn_out)
+        out = self.hidden2out(out)
 
         # out = self.hidden2out(lstm_out[-1])
         # out: (batch_size, num_class)
