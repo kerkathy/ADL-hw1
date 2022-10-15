@@ -123,9 +123,9 @@ class SeqTagger(SeqClassifier):
         self.bidirectional = bidirectional
         self.num_class = num_class + 1 # class + padding
 
-        # self.lstm = LSTM(
+        self.lstm = LSTM(
         # self.lstm = GRU(
-        self.lstm = RNN(
+        # self.lstm = RNN(
             input_size=embeddings.shape[1], # embedding dim
             hidden_size=hidden_size, 
             num_layers=num_layers, 
@@ -133,6 +133,7 @@ class SeqTagger(SeqClassifier):
             bidirectional=bidirectional, 
         )
         
+        self.dropout = Dropout(self.dropout)
         # Fully connected linear layer that converts final hidden state to output 
         self.hidden2out = Linear(2*self.hidden_size, self.num_class) if self.bidirectional else Linear(self.hidden_size, self.num_class)
         # self.hidden2out = Sequential(
@@ -148,6 +149,8 @@ class SeqTagger(SeqClassifier):
         embeds = self.embed(batch.t()) 
         # print("==Embedding Layer==")
         # print("Now: {}".format(embeds.size()))
+        embeds = self.dropout(embeds)
+
         lsrm_out, _ = self.lstm(embeds)
         # lsrm_out: tensor(seq_len, batch_size, 2*hidden_size if bidirectional else hidden_size)
         # print("==GRU==\nNow: {}".format(lsrm_out.size()))
