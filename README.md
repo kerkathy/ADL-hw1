@@ -1,4 +1,4 @@
-# Sample Code for Homework 1 ADL NTU
+# Homework 1 ADL NTU
 
 ## Environment
 ```shell
