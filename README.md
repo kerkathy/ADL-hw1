@@ -19,14 +19,14 @@ bash download.sh
 This will run the test for intent classification given the test data provided in prompt. A `pred.intent.csv` should be generated.
 ```shell
 bash intent_cls.sh /path/to/test.json /path/to/pred.csv
-# bash intent_cls.sh /data/intent/test.json ./pred.intent.csv
+# bash intent_cls.sh data/intent/test.json pred.intent.csv
 ```
 
 ### Slot tagging
 This will run the test for slot tagging given the test data provided in prompt. A `pred.intent.csv` should be generated.
 ```shell
 bash slot_tag.sh /path/to/test.json /path/to/pred.csv
-# bash slot_tag.sh /data/slot/test.json ./pred.slot.csv
+# bash slot_tag.sh data/slot/test.json pred.slot.csv
 ```
 
 ## Reproduce the Trained Checkpoint
