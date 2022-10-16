@@ -62,7 +62,7 @@ def main(args):
                 all_ids.append(id)
 
     # TODO: write prediction to file (args.pred_file)
-    with open("results/intent" / args.pred_file, 'w') as f:
+    with open(args.pred_file, 'w') as f:
         f.write('id,intent\n')
         for id, y in zip(all_ids, predict):
             # TODO: id2label

@@ -5,8 +5,11 @@
 Assume that you already have the environment as the one stated in the sample code provided by TAs.
 If not, please run
 ```shell
+# If you have conda, we recommend you to build a conda environment called "adl-hw1"
+# Get into a conda environment, then
 make
 ```
+
 
 ### Preprocessing
 This will download `/ckpt` and `/cache` folder which contains the best model checkpoints and pretrained embeddings respectively.  
@@ -31,7 +34,7 @@ bash slot_tag.sh /path/to/test.json /path/to/pred.csv
 
 ## Reproduce the Trained Checkpoint
 ### Preprocessing
-This will download `/ckpt` and `/cache` folder which contains the best model checkpoints and pretrained embeddings respectively.  
+This will download `/ckpt`, `/cache`, and `data` folder which contains the best model checkpoints, pretrained embeddings, and necessary data respectively. 
 ```shell
 # Download necessary files
 bash download.sh
@@ -42,7 +45,7 @@ This will first train a intent classification model using `data/intent/train.jso
 Then, run the test for intent classification using `data/intent/test.json`. A `pred.intent.csv` should be generated.
 ```shell
 python3 train_intent.py --ckpt_name intent_best.ckpt --num_epoch 80 --batch_size 256 --dropout 0.6
-python3 test_intent.py --ckpt_path intent_best.ckpt --pred_flie pred.intent.csv --test_file data/intent/test.json 
+python3 test_intent.py --ckpt_path ckpt/intent/intent_best.ckpt --pred_file pred.intent.csv --test_file data/intent/test.json 
 ```
 
 ### Slot tagging
@@ -50,5 +53,5 @@ This will first train a slot tagging model using `data/slot/train.json` and `dat
 Then, run the test for slot tagging using `data/intent/test.json`. A `pred.slot.csv` should be generated.
 ```shell
 python3 train_slot.py --ckpt_name slot_best.ckpt --num_epoch 60 --dropout 0.6
-python3 test_slot.py --ckpt_path slot_best.ckpt --pred_flie pred.slot.csv --test_file data/slot/test.json 
+python3 test_slot.py --ckpt_path ckpt/slot/slot_best.ckpt --pred_file pred.slot.csv --test_file data/slot/test.json 
 ```
