@@ -12,7 +12,7 @@ make
 
 
 ### Preprocessing
-This will download `/ckpt` and `/cache` folder which contains the best model checkpoints and pretrained embeddings respectively.  
+This will download `/ckpt`, `/cache`, and `data` folder which contains the best model checkpoints, pretrained embeddings, and necessary data respectively. 
 ```shell
 # Download necessary files
 bash download.sh
